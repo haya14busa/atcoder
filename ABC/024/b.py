@@ -40,34 +40,6 @@
 #
 
 
-def tailrec(func):
-    from functools import wraps
-    self_func = [func]
-    self_firstcall = [True]
-    self_CONTINUE = [object()]
-    self_argskwd = [None]
-
-    @wraps(func)
-    def _tail_recursive(*args, **kwd):
-        if self_firstcall[0] is True:
-            func = self_func[0]
-            CONTINUE = self_CONTINUE
-            self_firstcall[0] = False
-            try:
-                while True:
-                    result = func(*args, **kwd)
-                    if result is CONTINUE:  # update arguments
-                        args, kwd = self_argskwd[0]
-                    else:  # last call
-                        return result
-            finally:
-                self_firstcall[0] = True
-        else:  # return the arguments of the tail call
-            self_argskwd[0] = args, kwd
-            return self_CONTINUE
-    return _tail_recursive
-
-
 def solve(n: int, t: int, cs) -> int:
     '''
     :n the number of people to pass by automatic door
@@ -75,32 +47,22 @@ def solve(n: int, t: int, cs) -> int:
     :cs the clock times of customers to pass by automatic door today
     :return the sum of duration to open the automatic door
     '''
-    @tailrec
-    def go(duration: int, tstart: int, rest):
-        if not rest:
-            return duration
-        x, *xs = rest
-        if tstart + t > x:
-            return go(duration=duration + (x - tstart),
-                      tstart=x,
-                      rest=xs)
+    duration = 0
+    tstart = -float('inf')
+    for c in cs:
+        if tstart + t > c:
+            duration += c - tstart
         else:
-            return go(duration=duration + t, tstart=x, rest=xs)
-    return go(duration=0, tstart=-float('inf'), rest=cs)
+            duration += t
+        tstart = c
+    return duration
 
 
 def getinput():
     def getints():
         return map(int, input().split(' '))
-
-    def getallinputs():
-        while True:
-            try:
-                yield ''.join(input())
-            except EOFError:
-                break
     n, t = getints()
-    _as = map(int, getallinputs())
+    _as = map(int, [input() for _ in range(n)])
     return n, t, _as
 
 
