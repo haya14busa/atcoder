@@ -5,68 +5,15 @@
 def solve(n: int, m: int, bss):
     ass = [[0 for _ in range(m)] for _ in range(n)]
 
-    def put(x, i, j):
-        '''up, left, right, down'''
-        # # up
-        # if (1 < i and
-        #     0 < j < m - 1 and
-        #     bss[i - 2][j] >= x and
-        #     bss[i - 1][j - 1] >= x and
-        #     bss[i - 1][j + 1] >= x
-        #    ):
-        #     bss[i - 2][j] -= x
-        #     bss[i - 1][j - 1] -= x
-        #     bss[i - 1][j + 1] -= x
-        #     bss[i][j] -= x
-        #     ass[i - 1][j] += x
-
-        # left
-        if (1 < i < n - 1 and
-            2 < j and
-            bss[i - 1][j - 1] >= x and
-            bss[i][j - 2] >= x and
-            bss[i + 1][j - 1] >= x
-           ):
-            bss[i - 1][j - 1] -= x
-            bss[i][j - 2] -= x
-            bss[i + 1][j - 1] -= x
-            bss[i][j] -= x
-            ass[i][j - 1] += x
-
-        # right
-        # if (1 < i < n - 1 and
-        #     j < m - 2 and
-        #     bss[i - 1][j + 1] >= x and
-        #     bss[i][j + 2]     >= x and
-        #     bss[i + 1][j + 1] >= x
-        #    ):
-        #     bss[i - 1][j + 1] -= x
-        #     bss[i][j + 2]     -= x
-        #     bss[i + 1][j + 1] -= x
-        #     bss[i][j] -= x
-        #     ass[i][j + 1] += x
-
-        # down
-        if (i < n - 2 and
-            0 < j < m - 1 and
-            bss[i + 1][j - 1] >= x and
-            bss[i + 1][j + 1] >= x and
-            bss[i + 2][j]     >= x
-           ):
-            bss[i + 1][j - 1] -= x
-            bss[i + 1][j + 1] -= x
-            bss[i + 2][j]     -= x
-            bss[i][j] -= x
-            ass[i + 1][j] += x
-
-    for x in range(1, 10):
-        for i in range(n):
-            for j in range(m):
-                # if bss[i][j] == x:
-                if bss[i][j] == x:
-                    put(x, i, j)
-                    # print(x)
-                    # print('ass: ', ass)
+    for i in range(1, n):
+        for j in range(1, m):
+            if bss[i - 1][j] > 0 and bss[i][j - 1] > 0 and bss[i][j + 1] > 0 and bss[i + 1][j] > 0:
+                r = min(bss[i - 1][j], bss[i][j - 1], bss[i][j + 1], bss[i + 1][j])
+                ass[i][j] = r
+                bss[i - 1][j] -= r
+                bss[i][j - 1] -= r
+                bss[i][j + 1] -= r
+                bss[i + 1][j] -= r
     return ass
 
 
