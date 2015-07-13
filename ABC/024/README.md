@@ -1,3 +1,5 @@
+[Welcome to AtCoder Beginner Contest 024 - AtCoder Beginner Contest 024 | AtCoder](http://abc024.contest.atcoder.jp/)
+
 A - 動物園
 ==========
 
