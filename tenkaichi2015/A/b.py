@@ -6,6 +6,9 @@ import io
 
 
 def solve(n, ses):
+    '''
+    ses: List[(start_time_str, ent_time_str)]
+    '''
     assert(1 <= n <= 100)
 
     def tomill(time):
@@ -16,52 +19,23 @@ def solve(n, ses):
         return mil + 1000 * s + 1000 * 60 * m + 1000 * 60 * 60 * (h - 21)
 
     ses = list(map(lambda se: list(map(tomill, se)), ses))
-    ds = [None for _ in range(n)]
 
-    badrange = None
+    backed_se = [(start, end) for start, end in ses if start >= end]
+    left = max([-1] + list(map(lambda se: se[0], backed_se))) - 1000
+    right = min([float('inf')] + list(map(lambda se: se[1], backed_se))) + 1000
 
-    def isOkRange(se):
-        if not badrange:
-            return True
-        s, e = se
-        return not (
-            (badrange[0] - 1000) < s < (badrange[1] + 1000) or
-            (badrange[0] - 1000) < e < (badrange[1] + 1000)
-        )
-
-    def isOverBadRange(se):
-        if not badrange:
-            return False
-        s, e = se
-        return s <= (badrange[0] - 1000) and (badrange[1] + 1000) <= e
-
-    tobadi = None
-    for i, se in enumerate(ses):
-        if not isOkRange(se):
-            ds[i] = [-1] + se
-            continue
-        else:
-            d = se[1] - se[0]
-            if d > 0:
-                if isOverBadRange(se):
-                    ds[i] = [d + 1000] + se
-                else:
-                    ds[i] = [d] + se
-            else:
-                assert tobadi is None
-                badrange = se
-                tobadi = i
-                ds[i] = [d + 1000] + se
-
-    if tobadi is not None:
-        for i in range(tobadi):
-            if not isOkRange(ds[i][1:]):
-                ds[i] = [-1]
-            elif isOverBadRange(ds[i][1:]):
-                ds[i][0] += 1000
-        return map(lambda ds: ds[0], ds)
-    else:
+    if right == float('inf'):
         return [-1 for _ in range(n)]
+    else:
+        ds = []
+        for start, end in ses:
+            if end <= left or right <= start:
+                ds += [end - start]
+            elif ((start >= end) or (start <= left and right <= end)):
+                ds += [end - start + 1000]
+            else:
+                ds += [-1]
+        return ds
 
 
 def getinput():
@@ -156,16 +130,20 @@ def test():
         (
             # INPUT
             '''\
-3
+5
 21:00:00.000 21:00:03.000
 21:00:01.500 21:00:01.000
 21:00:00.000 21:00:03.000
+21:00:00.700 21:00:01.800
+21:00:00.400 21:00:01.800
             ''',
             # EXPECT
             '''\
 4000
 500
 4000
+-1
+-1
             '''
         ),
 
