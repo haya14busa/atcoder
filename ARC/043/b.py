@@ -4,52 +4,43 @@
 import sys
 import io
 
+MOD = 10 ** 9 + 7
 
 def solve(n, ds):
+    assert 4 <= n <= 10 ** 5
     ds = sorted(ds)
+    MD = 10 ** 5 + 1  # max d
 
-    cache = {}
+    # dp[i][d]
+    # i: i 番目の問題として (0 <= i <= 4)
+    # d: d (D_x) を採用した
+    # 場合の数
+    dp = [[0] * MD for _ in range(5)]
 
-    def cnt(_min, rest):
-        if (_min, rest) in cache:
-            return cache[(_min, rest)]
-        else:
-            candidates = [d for d in ds if d >= _min]
-            if rest == 1:
-                cache[(_min, rest)] = len(candidates)
-            elif (len(candidates) < rest or
-                  candidates[-1] < _min * (2 ** (rest - 1))):
-                cache[(_min, rest)] = 0
-            else:
-                c = 0
-                for i in candidates:
-                    # Use i
-                    c += cnt(i * 2, rest - 1)
-                cache[(_min, rest)] = c
-            return cache[(_min, rest)]
+    for d in ds:
+        dp[0][d] += 1
 
-    # print('ds:', ds)
-    # def cnt(idx, rest):
-    #     if (idx, rest) in cache:
-    #         return cache[(idx, rest)]
-    #     else:
-    #         if n < idx + rest:
-    #             cache[(idx, rest)] = 0
-    #             return 0
-    #         t = ds[idx]
-    #         candidates = [d for d in ds[idx + 1:] if d >= t * 2]
-    #         if len(candidates) < rest - 1:
-    #             for i in range(rest, 5):
-    #                 cache[(idx, i)] = 0
-    #         elif rest == 2:
-    #             print('ichi:', idx, t, candidates)
-    #             cache[(idx, rest)] = len(candidates) + cnt(idx + 1, rest)
-    #         else:
-    #             cache[(idx, rest)] = cnt(idx + 1, rest) + cnt(idx + 1, rest - 1)
-    #         return cache[(idx, rest)]
+    s = 0
+    for i in range(MD):
+        s += dp[0][i]
+        dp[1][i] = s
 
-    r = cnt(0, 4)
-    return r % (10 ** 9 + 7)
+    for i in range(2, 4 + 1):
+        for j in range(1, MD):
+            dp[i][j] = dp[i][j - 1]
+            if dp[0][j]:
+                dp[i][j] += (dp[i - 1][j // 2] * dp[0][j])
+                # dp[i][j] *= dp[0][j]
+
+
+    # print('=' * 10)
+    # print('ds: ', ds)
+    # print('i', list(range(ds[-1] + 1)))
+    # print('--')
+    # for ii in range(4, -1, -1):
+    #     print(ii, dp[ii][:ds[-1] + 1])
+
+    return dp[4][-1] % MOD
 
 
 def getinput():
@@ -80,6 +71,15 @@ def main():
         print(iosolve())
     else:
         test()
+        # print(solve(8, [1,3,4,6,7,8,10,12]))
+        # print(solve(4, [2, 4, 8, 16]))
+        # print(solve(5, [2, 4, 8, 16, 16]))
+        # print(solve(7, [1, 2, 2, 4, 4, 8, 8]))
+        # print(solve(7, [1, 2, 3, 3, 4, 6, 16]))
+        # 1, 2, 4, 16
+        # 1, 2, 6, 16
+        # 1, 3, 6, 16
+        # 1, 3, 6, 16
 
 
 def test():
