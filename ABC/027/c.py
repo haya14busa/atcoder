@@ -17,7 +17,15 @@ def solve(n):
 
     lnum = line(n)
     if lnum % 2:
-        if 2 ** lnum <= n <= 2 ** (lnum - 2) * 5 - 1:
+        def accum(lnum):
+            s = 0
+            lnum -= 2
+            while lnum > 0:
+                s += 2 ** lnum
+                lnum -= 2
+            return s
+        # if 2 ** lnum <= n <= 2 ** (lnum - 2) * 5 - 1:
+        if 2 ** lnum <= n <= 2 ** lnum + accum(lnum) - 1:
             return 'Aoki'
         else:
             return 'Takahashi'
