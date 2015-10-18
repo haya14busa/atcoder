@@ -9,37 +9,33 @@ def solve(n, m, sts):
     assert 1 <= n <= 3 * (10 ** 5)
     assert 1 <= m <= 1 * (10 ** 5)
     assert len(sts) == m
-    ists = list(enumerate(sts, 1))
-    ists.sort(key=lambda kst: kst[1][1])
-    ists.sort(key=lambda kst: kst[1][0])
-    # print('---')
-    # print(ists)
-    ans = []
-    pleft = -100 # left wall
-    prev = (-100, -1)
-    right = -100
-    for i, (s, t) in ists:
-        # print(i, (s, t))
-        # if t <= prev[1]:
-        if t <= right:
-            ans.append(i)
-        if s <= pleft and right <= t:
-            ans.append(previ)
-        # if pleft + 1 == s and right <= t:
-        if pleft + 1 >= s and right <= t:
-            ans.append(previ)
-        if prev == (s, t):
-            ans.append(previ)
-        if prev[0] == s and prev[1] <= t:
-            ans.append(previ)
-        # pleft = max([s, right])
-        pleft = max(pleft, right)
-        prev = (s, t)
-        right = max(right, t)
-        previ = i
-        # print('ans:', ans)
-    ans = list(set(ans))
-    return [len(ans)] + ans
+    cover = gen_cover(n, sts)
+    table = cover_to_table(cover)
+    skipable_sections = []
+    for i, (s, t) in enumerate(sts, 1):
+        if can_skip_cleaning(table, s, t):
+            skipable_sections.append(i)
+    return [len(skipable_sections)] + skipable_sections
+
+def gen_cover(n, sts):
+    cover = [0 for _ in range(n + 1)]
+    for s, t in sts:
+        cover[s - 1] += 1
+        cover[t] -= 1
+    cover = cumulative_sum(cover)
+    return cover[:-1]
+
+# table: table to solve...
+def cover_to_table(cover):
+    return [0] + cumulative_sum(list(map(lambda x: 1 if x == 1 else 0, cover[:])))
+
+def can_skip_cleaning(table, start, end):
+    return table[end] - table[start - 1] == 0
+
+def cumulative_sum(xs):
+    for i, _ in enumerate(xs[1:], 1):
+        xs[i] += xs[i - 1]
+    return xs
 
 
 def getinput():
