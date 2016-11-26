@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"runtime/debug"
 	"strings"
 )
 
@@ -21,80 +22,45 @@ func main() {
 func solve(r io.Reader, w io.Writer) {
 	var n, m int
 	fmt.Fscanln(r, &n, &m)
-	xcnt := make(map[int]int, n)
+	cntByX := make(map[int]int)
+	cntByMod := make(map[int]int)
 	for i := 0; i < n; i++ {
 		var x int
 		fmt.Fscan(r, &x)
-		xcnt[x]++
+		cntByX[x]++
+		cntByMod[x%m]++
+	}
+	pairN := 0
+
+	for mod := 0; mod <= m/2; mod++ {
+		cnt := cntByMod[mod]
+		if mod == 0 || (m%2 == 0 && mod == m/2) {
+			pairN += cnt / 2
+			cntByMod[mod] %= 2
+			continue
+		}
+		that := m - mod
+		assert(mod < that)
+		if cnt > cntByMod[that] {
+			cnt = cntByMod[that]
+		}
+		pairN += cnt
+		cntByMod[mod] -= cnt
+		cntByMod[that] -= cnt
 	}
 
-	// by reminder
-	// reminder -> x -> count
-	xsbyrem := make(map[int]map[int]int)
-
-	for x, cnt := range xcnt {
-		rem := x % m
-		if _, ok := xsbyrem[rem]; !ok {
-			xsbyrem[rem] = make(map[int]int)
-		}
-		xsbyrem[rem][x] = cnt
-	}
-
-	pairNum := 0
-
-	calced := make([]bool, m)
-
-	for rem, cntByX := range xsbyrem {
-		if calced[rem] {
-			continue
-		}
-		calced[rem] = true
-		want := m - rem
-		if rem == 0 || rem == want {
-			pairNum += sum(cntByX) / 2
-			continue
-		}
-		if calced[want] {
-			continue
-		}
-		calced[want] = true
-		t := xsbyrem[want]
-		if t == nil {
-			t = make(map[int]int)
-		}
-		s := cntByX
-		sNum := sum(cntByX)
-		tNum := sum(t)
-		if sNum < tNum {
-			s, t = t, s
-			sNum, tNum = tNum, sNum
-		}
-		for x, cnt := range s {
-			if !(sNum > tNum+1) {
-				break
+	for x, cnt := range cntByX {
+		if cnt > 1 && cntByMod[x%m] > 1 {
+			if cnt > cntByMod[x%m] {
+				cnt = cntByMod[x%m]
 			}
-			if cnt > 1 {
-				c := sNum - tNum
-				if c > cnt {
-					c = cnt
-				}
-				s[x] -= c
-				sNum -= c
-				pairNum += c / 2
-			}
+			c := cnt / 2
+			pairN += c
+			cntByMod[x%m] -= c * 2
 		}
-		pairNum += tNum
 	}
 
-	fmt.Fprintln(w, pairNum)
-}
-
-func sum(m map[int]int) int {
-	s := 0
-	for _, c := range m {
-		s += c
-	}
-	return s
+	fmt.Fprintln(w, pairN)
 }
 
 func test() {
@@ -123,6 +89,13 @@ func test() {
 `,
 			want: `1`,
 		},
+		{
+			in: `
+20 10
+1 5 6 10 11 11 11 11 11 11 31 31 20 21 25 25 26 99 99 99
+`,
+			want: `8`,
+		},
 	}
 	for i, tt := range tests {
 		fmt.Printf("=== TEST %d\n", i)
@@ -136,4 +109,10 @@ func test() {
 
 func chomp(s string) string {
 	return strings.Trim(s, "\n")
+}
+
+func assert(b bool) {
+	if !b {
+		debug.PrintStack()
+	}
 }
