@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
-	"runtime/debug"
+	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -113,6 +115,21 @@ func chomp(s string) string {
 
 func assert(b bool) {
 	if !b {
-		debug.PrintStack()
+		_, file, line, ok := runtime.Caller(1)
+		if ok {
+			f, _ := os.Open(file)
+			defer f.Close()
+			s := bufio.NewScanner(f)
+			lnum := 0
+			for s.Scan() {
+				lnum++
+				if lnum == line {
+					wd, _ := os.Getwd()
+					fname, _ := filepath.Rel(wd, file)
+					fmt.Printf("assertion fails: %s:%d: %v\n", fname, line, s.Text())
+					break
+				}
+			}
+		}
 	}
 }
