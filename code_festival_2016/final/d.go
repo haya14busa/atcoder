@@ -18,12 +18,6 @@ func main() {
 	}
 }
 
-type RemCnt struct {
-	Same map[int]int
-	Diff int
-	Num  int
-}
-
 func solve(r io.Reader, w io.Writer) {
 	var n, m int
 	fmt.Fscanln(r, &n, &m)
@@ -34,115 +28,73 @@ func solve(r io.Reader, w io.Writer) {
 		xcnt[x]++
 	}
 
-	rm := make(map[int]*RemCnt)
-
-	ones := make([]int, 0)
+	// by reminder
+	// reminder -> x -> count
+	xsbyrem := make(map[int]map[int]int)
 
 	for x, cnt := range xcnt {
-		r := x % m
-		if _, ok := rm[r]; !ok {
-			rm[r] = &RemCnt{}
+		rem := x % m
+		if _, ok := xsbyrem[rem]; !ok {
+			xsbyrem[rem] = make(map[int]int)
 		}
-		rm[r].Num += cnt
-		if cnt > 1 {
-			if rm[r].Same == nil {
-				rm[r].Same = make(map[int]int)
-			}
-			rm[r].Same[x] += cnt
-		} else {
-			rm[r].Diff += cnt
-			ones = append(ones, x)
-		}
+		xsbyrem[rem][x] = cnt
 	}
 
 	pairNum := 0
-	for _, x := range ones {
-		xm := x % m
-		want := m - xm
-		if m == want {
-			want = 0
-		}
-		if xm == want {
-			if rm[want].Diff > 1 {
-				rm[want].Num -= 2
-				rm[want].Diff -= 2
-				pairNum++
-				// fmt.Println("pair", x, "?")
-			} else {
-				y := -1
-				for xthat, cnt := range rm[want].Same {
-					y = xthat
-					if cnt%2 == 1 {
-						break
-					}
-				}
-				if y != -1 {
-					rm[want].Num -= 2
-					rm[want].Diff--
-					rm[want].Same[y]--
-					pairNum++
-					// fmt.Println("pair", x, y)
-				}
-			}
-			continue
-		}
-		if c, ok := rm[want]; ok {
-			if c.Diff > 0 {
-				c.Num--
-				c.Diff--
-				rm[xm].Num--
-				rm[xm].Diff--
-				pairNum++
-				// fmt.Println("pair", x, "?")
-			} else {
-				y := -1
-				for xthat, cnt := range c.Same {
-					y = xthat
-					if cnt%2 == 1 {
-						break
-					}
-				}
-				if y != -1 {
-					c.Num--
-					c.Same[y]--
-					rm[xm].Num--
-					rm[xm].Diff--
-					pairNum++
-					// fmt.Println("pair", x, y)
-				}
-			}
-		}
-	}
 
-	for x, c := range rm {
-		if c.Num == 0 {
-			delete(rm, x)
+	calced := make([]bool, m)
+
+	for rem, cntByX := range xsbyrem {
+		if calced[rem] {
 			continue
 		}
-		xm := x % m
-		want := m - xm
-		if m == want {
-			want = 0
+		calced[rem] = true
+		want := m - rem
+		if rem == 0 || rem == want {
+			pairNum += sum(cntByX) / 2
+			continue
 		}
-		if cthat, ok := rm[want]; ok && cthat.Num > 0 {
-			num := c.Num
-			if num > cthat.Num {
-				num = cthat.Num
+		if calced[want] {
+			continue
+		}
+		calced[want] = true
+		t := xsbyrem[want]
+		if t == nil {
+			t = make(map[int]int)
+		}
+		s := cntByX
+		sNum := sum(cntByX)
+		tNum := sum(t)
+		if sNum < tNum {
+			s, t = t, s
+			sNum, tNum = tNum, sNum
+		}
+		for x, cnt := range s {
+			if !(sNum > tNum+1) {
+				break
 			}
-			plus := num / 2
-			c.Num -= plus
-			cthat.Num -= plus
-			pairNum += plus
-			// fmt.Printf("%d cthat: %#v\n", want, cthat)
+			if cnt > 1 {
+				c := sNum - tNum
+				if c > cnt {
+					c = cnt
+				}
+				s[x] -= c
+				sNum -= c
+				pairNum += c / 2
+			}
 		}
-		if plus := (c.Num - c.Diff) / 2; plus > 0 {
-			pairNum += plus
-			c.Num -= plus * 2
-			// fmt.Println("pair", x, x)
-		}
+		pairNum += tNum
 	}
 
 	fmt.Fprintln(w, pairNum)
+}
+
+func sum(m map[int]int) int {
+	s := 0
+	for _, c := range m {
+		s += c
+	}
+	return s
 }
 
 func test() {
@@ -159,10 +111,17 @@ func test() {
 		},
 		{
 			in: `
-17 10
-1 5 6 10 11 11 11 20 21 25 25 26 99 99 99 19 19
+15 10
+1 5 6 10 11 11 11 20 21 25 25 26 99 99 99
 `,
-			want: `7`,
+			want: `6`,
+		},
+		{
+			in: `
+3 10
+8 8 8
+`,
+			want: `1`,
 		},
 	}
 	for i, tt := range tests {
