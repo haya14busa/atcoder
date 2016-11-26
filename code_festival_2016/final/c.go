@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-	// if true {
 	if false {
 		test()
 	} else {
@@ -30,42 +29,36 @@ func solve(r io.Reader, w io.Writer) {
 		for j := 0; j < langs; j++ {
 			var lang int
 			fmt.Fscan(r, &lang)
-			planet[i][lang] = true
+			planet[i][lang-1] = true
 		}
 	}
 
-	if communicatable(planet, n) {
+	if communicatable(planet, n, m) {
 		fmt.Fprintln(w, "YES")
 	} else {
 		fmt.Fprintln(w, "NO")
 	}
 }
 
-func communicatable(planet map[int]map[int]bool, n int) bool {
-	// p1 -> p2 -> bool
-	table := make(map[int]map[int]bool)
-	for i := 0; i < n; i++ {
-		table[i] = make(map[int]bool)
+func communicatable(planet map[int]map[int]bool, n, m int) bool {
+	g := make(map[int][]int)
+	for i := 0; i < n+m; i++ {
+		g[i] = make([]int, 0)
 	}
 
-	for p1, langs1 := range planet {
-	P:
-		for p2, langs2 := range planet {
-			if !(p1 < p2) {
-				continue P
-			}
-			for l2 := range langs2 {
-				if _, ok := langs1[l2]; ok {
-					table[p1][p2] = true
-					table[p2][p1] = true
-					continue P
-				}
-			}
+	for p, langs := range planet {
+		g[p] = make([]int, len(langs))
+		for l := range langs {
+			// fmt.Println("p", p)
+			// fmt.Println("n+l", n+l)
+			langi := n + l
+			g[p] = append(g[p], langi)
+			g[langi] = append(g[langi], p)
 		}
 	}
 
-	seen := make([]bool, n)
-	traverse(table, 0, seen)
+	seen := make([]bool, n+m)
+	traverse(g, 0, seen)
 	for i := 0; i < n; i++ {
 		if !seen[i] {
 			return false
@@ -74,9 +67,9 @@ func communicatable(planet map[int]map[int]bool, n int) bool {
 	return true
 }
 
-func traverse(g map[int]map[int]bool, i int, seen []bool) {
+func traverse(g map[int][]int, i int, seen []bool) {
 	seen[i] = true
-	for v := range g[i] {
+	for _, v := range g[i] {
 		if !seen[v] {
 			traverse(g, v, seen)
 		}
