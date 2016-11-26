@@ -20,60 +20,41 @@ func solve(r io.Reader, w io.Writer) {
 	var n int // number of participants
 	var m int // number of languages
 	fmt.Fscanln(r, &n, &m)
-	// planet: paticipant -> lang -> bool
-	planet := make(map[int]map[int]bool)
+
+	g := make(map[int][]int)
+
 	for i := 0; i < n; i++ {
-		planet[i] = make(map[int]bool)
 		var langs int
 		fmt.Fscan(r, &langs)
+		g[i] = make([]int, 0, langs)
 		for j := 0; j < langs; j++ {
 			var lang int
 			fmt.Fscan(r, &lang)
-			planet[i][lang-1] = true
-		}
-	}
-
-	if communicatable(planet, n, m) {
-		fmt.Fprintln(w, "YES")
-	} else {
-		fmt.Fprintln(w, "NO")
-	}
-}
-
-func communicatable(planet map[int]map[int]bool, n, m int) bool {
-	g := make(map[int][]int)
-	for i := 0; i < n+m; i++ {
-		g[i] = make([]int, 0)
-	}
-
-	for p, langs := range planet {
-		g[p] = make([]int, len(langs))
-		for l := range langs {
-			// fmt.Println("p", p)
-			// fmt.Println("n+l", n+l)
-			langi := n + l
-			g[p] = append(g[p], langi)
-			g[langi] = append(g[langi], p)
+			langi := n + lang - 1
+			g[i] = append(g[i], langi)
+			g[langi] = append(g[langi], i)
 		}
 	}
 
 	seen := make([]bool, n+m)
-	traverse(g, 0, seen)
+	q := []int{0}
+	for len(q) > 0 {
+		v := q[0]
+		q = q[1:]
+		if !seen[v] {
+			seen[v] = true
+			q = append(q, g[v]...)
+		}
+	}
+
 	for i := 0; i < n; i++ {
 		if !seen[i] {
-			return false
+			fmt.Fprintln(w, "NO")
+			return
 		}
 	}
-	return true
-}
-
-func traverse(g map[int][]int, i int, seen []bool) {
-	seen[i] = true
-	for _, v := range g[i] {
-		if !seen[v] {
-			traverse(g, v, seen)
-		}
-	}
+	fmt.Fprintln(w, "YES")
+	return
 }
 
 func test() {
