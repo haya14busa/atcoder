@@ -9,7 +9,8 @@ import (
 )
 
 func main() {
-	if true {
+	// if true {
+	if false {
 		test()
 	} else {
 		solve(os.Stdin, os.Stdout)
@@ -33,72 +34,53 @@ func solve(r io.Reader, w io.Writer) {
 		}
 	}
 
-	// lang1 -> lang2 -> bool where lang1 < lang2
-	transtable := make(map[int]map[int]bool)
-
-	for _, langs := range planet {
-		for lang1 := range langs {
-			for lang2 := range langs {
-				if lang1 == lang2 {
-					continue
-				}
-				l1, l2 := lang1, lang2
-				if lang1 > lang2 {
-					l1, l2 = lang2, lang1
-				}
-				if _, ok := transtable[l1]; !ok {
-					transtable[l1] = make(map[int]bool)
-				}
-				transtable[l1][l2] = true
-			}
-		}
-	}
-	if communicatable(planet, transtable) {
+	if communicatable(planet, n) {
 		fmt.Fprintln(w, "YES")
 	} else {
 		fmt.Fprintln(w, "NO")
 	}
 }
 
-func communicatable(planet map[int]map[int]bool, transtable map[int]map[int]bool) bool {
+func communicatable(planet map[int]map[int]bool, n int) bool {
+	// p1 -> p2 -> bool
+	table := make(map[int]map[int]bool)
+	for i := 0; i < n; i++ {
+		table[i] = make(map[int]bool)
+	}
+
 	for p1, langs1 := range planet {
 	P:
 		for p2, langs2 := range planet {
 			if !(p1 < p2) {
 				continue P
 			}
-			for l1 := range langs1 {
-				if _, ok := langs2[l1]; ok {
+			for l2 := range langs2 {
+				if _, ok := langs1[l2]; ok {
+					table[p1][p2] = true
+					table[p2][p1] = true
 					continue P
 				}
-				for l2 := range langs2 {
-					if l1 == l2 {
-						continue
-					}
-					from, to := l1, l2
-					if l1 > l2 {
-						from, to = l2, l1
-					}
-					if t, ok := transtable[from]; ok {
-						if _, ok := t[to]; ok {
-							continue P
-						}
-					}
-				}
 			}
-			fmt.Println(p1, p2)
+		}
+	}
+
+	seen := make([]bool, n)
+	traverse(table, 0, seen)
+	for i := 0; i < n; i++ {
+		if !seen[i] {
 			return false
 		}
 	}
 	return true
 }
 
-func genRange(i, j int) []int {
-	rs := make([]int, 0, j-i)
-	for ; i < j; i++ {
-		rs = append(rs, i)
+func traverse(g map[int]map[int]bool, i int, seen []bool) {
+	seen[i] = true
+	for v := range g[i] {
+		if !seen[v] {
+			traverse(g, v, seen)
+		}
 	}
-	return rs
 }
 
 func test() {
