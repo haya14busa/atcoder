@@ -4,15 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 )
 
 func main() {
-	if false {
+	b, _ := ioutil.ReadAll(os.Stdin)
+	if len(b) == 0 {
 		test()
 	} else {
-		solve(os.Stdin, os.Stdout)
+		solve(bytes.NewReader(b), os.Stdout)
 	}
 }
 
