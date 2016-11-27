@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -24,19 +25,47 @@ func main() {
 func solve(r io.Reader, w io.Writer) {
 	var n, a int
 	fmt.Fscanln(r, &n, &a)
-	dp := make(map[int]int)
-	for i := 0; ; i++ {
-		max := i
-		if x := dp[i-3-a]; x*3 > max {
-			max = x * 3
+	time := n
+	// k-1: count of eating cookies.
+	// k <= log2(n) because
+	//   - shortest eating interval is 2
+	for k := 1; k <= int(math.Ceil(math.Log2(float64(n)))); k++ {
+		// s: average number of eating interval
+		s := int(math.Ceil(math.Pow(float64(n), 1/float64(k))))
+		assert(pow(s, k) >= n)
+		c := 0              // the number of "s" interval
+		for ; c <= k; c++ { // TODO: binary search should be better
+			if n <= pow((s-1), (k-c))*pow(s, c) {
+				break
+			}
 		}
-		dp[i] = max
-		fmt.Println(i, max)
-		if max >= n {
-			fmt.Fprintln(w, i)
-			return
+		if t := (k-1)*a + s*c + (s-1)*(k-c); t < time {
+			// fmt.Println(strings.Join(procedure(s, k, c), ""))
+			time = t
 		}
 	}
+	fmt.Fprintln(w, time)
+}
+
+func procedure(s, k, c int) []string {
+	ps := make([]string, 0, (s-1)*(k-c)+s*c+(k-1))
+	for i := 0; i < k-c; i++ {
+		if i != 0 {
+			ps = append(ps, "E")
+		}
+		for j := 0; j < s-1; j++ {
+			ps = append(ps, "B")
+		}
+	}
+	for i := 0; i < c; i++ {
+		if len(ps) > 0 {
+			ps = append(ps, "E")
+		}
+		for j := 0; j < s; j++ {
+			ps = append(ps, "B")
+		}
+	}
+	return ps
 }
 
 func test() {
@@ -45,15 +74,7 @@ func test() {
 		want string
 	}{
 		{in: `8 1`, want: `7`},
-		// {in: `1000000000000 1000000000000`, want: `1000000000000`},
-		// {in: `10 10`, want: `10`},
-		// {in: `100 0`, want: `13`},
-		// {in: `100 1`, want: `16`},
-		// {in: `100 2`, want: `19`},
-		// {in: `100 3`, want: `22`},
-		// {in: `100 4`, want: `25`},
-		// {in: `100 5`, want: `28`},
-		// {in: `100 6`, want: `30`},
+		{in: `1000000000000 1000000000000`, want: `1000000000000`},
 	}
 	for i, tt := range tests {
 		fmt.Printf("=== TEST %d\n", i)
